@@ -92,21 +92,23 @@
         ctx.lineWidth = 3;
         ctx.stroke();
         
-        // Konversi RPM ke sudut: 0 RPM = 180° (kiri), 2400 RPM = 0° (kanan)
-        // Semakin besar RPM, sudut semakin kecil (bergerak ke kanan melewati atas)
+        // Konversi RPM ke sudut:
+        // Speedometer di ATAS: 0 RPM di kiri (180°), 2400 RPM di kanan (0°)
+        // Bergerak melewati ATAS (90°)
         const angle = 180 - (rpm / maxRPM) * 180;
         const rad = angle * Math.PI / 180;
         
-        // Track arc (background abu-abu) - setengah lingkaran dari kiri ke kanan (180° ke 0°)
+        // Track arc (background abu-abu) - setengah lingkaran ATAS dari kiri ke kanan
+        // Dari 180° ke 0° melewati 90° (ATAS)
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 280, Math.PI, 2 * Math.PI);
+        ctx.arc(centerX, centerY, 280, Math.PI, 0, true);
         ctx.strokeStyle = '#2a3a5a';
         ctx.lineWidth = 45;
         ctx.stroke();
         
         // Active arc (hijau) - dari kiri (180°) ke posisi RPM saat ini
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 280, Math.PI, rad);
+        ctx.arc(centerX, centerY, 280, Math.PI, rad, true);
         ctx.strokeStyle = '#00ff88';
         ctx.lineWidth = 45;
         ctx.stroke();
@@ -122,8 +124,7 @@
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Data untuk tick marks dan angka
-        // 0 RPM = 180°, 400=150°, 800=120°, 1200=90°, 1600=60°, 2000=30°, 2400=0°
+        // Data untuk tick marks dan angka (dari kiri ke kanan melewati atas)
         const values = [0, 400, 800, 1200, 1600, 2000, 2400];
         const angles = [180, 150, 120, 90, 60, 30, 0];
         
@@ -146,8 +147,8 @@
             ctx.lineWidth = 4;
             ctx.stroke();
             
-            // Angka
-            const textRadius = 230;
+            // Angka - ditempatkan di ATAS (radius lebih kecil)
+            const textRadius = 235;
             const textX = centerX + textRadius * Math.cos(radAngle);
             const textY = centerY + textRadius * Math.sin(radAngle);
             
@@ -158,10 +159,10 @@
             ctx.fillText(values[i].toString(), textX, textY);
         }
         
-        // Label "RPM"
+        // Label "RPM x100"
         ctx.fillStyle = '#888888';
         ctx.font = '14px "Segoe UI", Arial';
-        ctx.fillText('RPM', centerX, centerY + 100);
+        ctx.fillText('RPM', centerX, centerY + 130);
         
         // Jarum pointer
         const pointerLength = 230;
