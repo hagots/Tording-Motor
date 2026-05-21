@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Motor Speedometer - Real-time Monitor</title>
     
-    <!-- Firebase SDK VERSI LAMA (compat) yang stabil -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -25,7 +25,7 @@
         }
         
         .container {
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto;
         }
         
@@ -59,9 +59,9 @@
         
         .gauge-container {
             position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 0 auto 20px;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto 15px;
         }
         
         canvas {
@@ -77,7 +77,7 @@
             font-size: 2.5em;
             font-weight: bold;
             color: #00ff88;
-            margin: 10px 0;
+            margin: 5px 0;
         }
         
         .stats {
@@ -103,13 +103,13 @@
         }
         
         .card-value {
-            font-size: 1.6em;
+            font-size: 1.8em;
             font-weight: bold;
             color: #00ff88;
         }
         
         .card-label {
-            font-size: 0.7em;
+            font-size: 0.8em;
             color: #aaa;
             margin-top: 5px;
         }
@@ -125,7 +125,7 @@
         }
         
         .temp-value {
-            font-size: 2em;
+            font-size: 2.2em;
             font-weight: bold;
             color: #ffaa00;
         }
@@ -159,7 +159,7 @@
         
         .last-update {
             text-align: center;
-            font-size: 0.7em;
+            font-size: 0.8em;
             margin-top: 15px;
         }
         
@@ -168,15 +168,6 @@
             font-size: 0.7em;
             color: #444;
             margin-top: 20px;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-        
-        .online {
-            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
@@ -195,7 +186,7 @@
         </div>
         
         <div class="gauge-container">
-            <canvas id="speedCanvas" width="300" height="300"></canvas>
+            <canvas id="speedCanvas" width="350" height="350"></canvas>
         </div>
         
         <div class="rpm-value">
@@ -236,7 +227,6 @@
     
     <script>
         // ========== KONFIGURASI FIREBASE ==========
-        // DATA ANDA SUDAH BENAR
         const firebaseConfig = {
             apiKey: "AIzaSyB7ty5SHakCyAxgFozl8r2ViDYKnF8_t7Q",
             authDomain: "motor-speedometer-monitor.firebaseapp.com",
@@ -255,56 +245,62 @@
         const canvas = document.getElementById('speedCanvas');
         const ctx = canvas.getContext('2d');
         const maxRPM = 2400;
-        const centerX = 150;
-        const centerY = 150;
+        const centerX = 175;
+        const centerY = 175;
         
-        // Draw speedometer gauge (diperbaiki untuk 300x300 canvas)
-        function drawSpeedometer(rpm) {
-            const angle = Math.min((rpm / maxRPM) * 180, 180);
-            const rad = (angle * Math.PI) / 180;
-            const startRad = Math.PI;
-            const endRad = Math.PI + rad;
-            
-            ctx.clearRect(0, 0, 300, 300);
-            
-            // Background circle
+        // Clear canvas dengan background yang benar
+        function clearCanvas() {
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 130, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 165, 0, Math.PI * 2);
             ctx.fillStyle = '#0a1a2f';
             ctx.fill();
+        }
+        
+        // Draw speedometer gauge
+        function drawSpeedometer(rpm) {
+            clearCanvas();
             
-            // Outline circle
+            const angle = Math.min((rpm / maxRPM) * 180, 180);
+            const rad = (angle * Math.PI) / 180;
+            const endRad = Math.PI + rad;
+            
+            // Border circle
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 130, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 160, 0, Math.PI * 2);
             ctx.strokeStyle = '#00ff8844';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
             
-            // Track arc (background - grey)
+            // Track arc (background)
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 115, Math.PI, Math.PI * 2);
+            ctx.arc(centerX, centerY, 140, Math.PI, Math.PI * 2);
             ctx.strokeStyle = '#2a3a5a';
-            ctx.lineWidth = 25;
+            ctx.lineWidth = 28;
             ctx.stroke();
             
-            // Active arc (green - sesuai RPM)
+            // Active arc (green)
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 115, Math.PI, endRad);
+            ctx.arc(centerX, centerY, 140, Math.PI, endRad);
             ctx.strokeStyle = '#00ff88';
-            ctx.lineWidth = 25;
+            ctx.lineWidth = 28;
             ctx.stroke();
             
             // Inner circle
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 95, 0, Math.PI * 2);
             ctx.fillStyle = '#0f2a4a';
             ctx.fill();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 95, 0, Math.PI * 2);
+            ctx.strokeStyle = '#00ff8844';
+            ctx.lineWidth = 2;
+            ctx.stroke();
             
-            // Tick marks and labels
+            // Tick marks dan labels - DIPERBAIKI posisinya
             for (let i = 0; i <= 12; i++) {
                 const tickAngle = (i * 15) * Math.PI / 180;
-                const radiusOuter = 125;
-                const radiusInner = 110;
+                const radiusOuter = 152;
+                const radiusInner = 135;
                 
                 const x1 = centerX + radiusInner * Math.cos(Math.PI + tickAngle);
                 const y1 = centerY + radiusInner * Math.sin(Math.PI + tickAngle);
@@ -314,41 +310,66 @@
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
-                ctx.strokeStyle = '#ffffffaa';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
                 
+                // Angka RPM
                 const rpmVal = i * 200;
-                const labelRadius = 100;
+                const labelRadius = 118;
                 const labelX = centerX + labelRadius * Math.cos(Math.PI + tickAngle);
                 const labelY = centerY + labelRadius * Math.sin(Math.PI + tickAngle);
-                ctx.fillStyle = '#ccc';
-                ctx.font = 'bold 11px Arial';
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 13px "Segoe UI", Arial';
+                ctx.shadowBlur = 0;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(rpmVal, labelX, labelY);
+                ctx.fillText(rpmVal.toString(), labelX, labelY);
             }
             
-            // Pointer
-            const pointerLength = 90;
+            // Label "RPM x100" di tengah bawah
+            ctx.fillStyle = '#888888';
+            ctx.font = '11px "Segoe UI", Arial';
+            ctx.fillText('RPM', centerX, centerY + 65);
+            
+            // Pointer/jarum
+            const pointerLength = 110;
+            const pointerWidth = 6;
             const pointerX = centerX + pointerLength * Math.cos(endRad);
             const pointerY = centerY + pointerLength * Math.sin(endRad);
             
+            // Gambar jarum lebih tebal dan jelas
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.lineTo(pointerX, pointerY);
             ctx.strokeStyle = '#ff4444';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = pointerWidth;
             ctx.stroke();
             
-            // Center circle
+            // Bayangan jarum
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
-            ctx.fillStyle = '#ff4444';
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(pointerX, pointerY);
+            ctx.strokeStyle = '#ff6666';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Center circle - luar
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+            ctx.fillStyle = '#1a1a2e';
             ctx.fill();
             ctx.beginPath();
+            ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Center circle - dalam
+            ctx.beginPath();
             ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#ff4444';
             ctx.fill();
         }
         
