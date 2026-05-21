@@ -92,23 +92,25 @@
         ctx.lineWidth = 3;
         ctx.stroke();
         
-        // Konversi RPM ke sudut:
-        // Speedometer di ATAS: 0 RPM di kiri (180°), 2400 RPM di kanan (0°)
-        // Bergerak melewati ATAS (90°)
-        const angle = 180 - (rpm / maxRPM) * 180;
-        const rad = angle * Math.PI / 180;
+        // Hitung sudut: 0° = kanan, 90° = bawah, 180° = kiri, 270° = atas
+        // Speedometer: 0 RPM di kiri (180°), 2400 RPM di kanan (0°)
+        // Bergerak melalui ATAS (270°)
+        const startAngle = Math.PI;  // 180° (kiri)
+        let endAngle = Math.PI - (rpm / maxRPM) * Math.PI;  // Bergerak ke 0° (kanan)
         
-        // Track arc (background abu-abu) - setengah lingkaran ATAS dari kiri ke kanan
-        // Dari 180° ke 0° melewati 90° (ATAS)
+        // Pastikan endAngle tidak lebih kecil dari 0
+        if (endAngle < 0) endAngle = 0;
+        
+        // Track arc (background abu-abu) - dari kiri ke kanan melalui ATAS
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 280, Math.PI, 0, true);
+        ctx.arc(centerX, centerY, 280, startAngle, 0, true);
         ctx.strokeStyle = '#2a3a5a';
         ctx.lineWidth = 45;
         ctx.stroke();
         
-        // Active arc (hijau) - dari kiri (180°) ke posisi RPM saat ini
+        // Active arc (hijau) - dari kiri ke posisi RPM
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 280, Math.PI, rad, true);
+        ctx.arc(centerX, centerY, 280, startAngle, endAngle, true);
         ctx.strokeStyle = '#00ff88';
         ctx.lineWidth = 45;
         ctx.stroke();
@@ -124,12 +126,13 @@
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Data untuk tick marks dan angka (dari kiri ke kanan melewati atas)
+        // Data untuk tick marks dan angka
+        // Speedometer di ATAS: dari kiri (180°) ke kanan (0°)
         const values = [0, 400, 800, 1200, 1600, 2000, 2400];
-        const angles = [180, 150, 120, 90, 60, 30, 0];
+        const anglesDeg = [180, 150, 120, 90, 60, 30, 0];
         
         for (let i = 0; i < values.length; i++) {
-            const deg = angles[i];
+            const deg = anglesDeg[i];
             const radAngle = deg * Math.PI / 180;
             
             // Tick mark
@@ -147,7 +150,7 @@
             ctx.lineWidth = 4;
             ctx.stroke();
             
-            // Angka - ditempatkan di ATAS (radius lebih kecil)
+            // Angka - ditempatkan di ATAS
             const textRadius = 235;
             const textX = centerX + textRadius * Math.cos(radAngle);
             const textY = centerY + textRadius * Math.sin(radAngle);
@@ -159,15 +162,15 @@
             ctx.fillText(values[i].toString(), textX, textY);
         }
         
-        // Label "RPM x100"
+        // Label "RPM"
         ctx.fillStyle = '#888888';
         ctx.font = '14px "Segoe UI", Arial';
         ctx.fillText('RPM', centerX, centerY + 130);
         
         // Jarum pointer
         const pointerLength = 230;
-        const pointerX = centerX + pointerLength * Math.cos(rad);
-        const pointerY = centerY + pointerLength * Math.sin(rad);
+        const pointerX = centerX + pointerLength * Math.cos(endAngle);
+        const pointerY = centerY + pointerLength * Math.sin(endAngle);
         
         // Jarum utama
         ctx.beginPath();
