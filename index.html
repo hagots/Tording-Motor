@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Motor Speedometer - Real-time Monitor</title>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK VERSI LAMA (compat) yang stabil -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -59,15 +59,15 @@
         
         .gauge-container {
             position: relative;
-            width: 280px;
-            height: 280px;
+            width: 300px;
+            height: 300px;
             margin: 0 auto 20px;
         }
         
         canvas {
             width: 100%;
             height: 100%;
-            background: #0f3460;
+            background: #0a1a2f;
             border-radius: 50%;
             box-shadow: 0 0 30px rgba(0,255,136,0.2);
         }
@@ -160,7 +160,6 @@
         .last-update {
             text-align: center;
             font-size: 0.7em;
-            color: #666;
             margin-top: 15px;
         }
         
@@ -196,7 +195,7 @@
         </div>
         
         <div class="gauge-container">
-            <canvas id="speedCanvas" width="280" height="280"></canvas>
+            <canvas id="speedCanvas" width="300" height="300"></canvas>
         </div>
         
         <div class="rpm-value">
@@ -237,7 +236,7 @@
     
     <script>
         // ========== KONFIGURASI FIREBASE ==========
-        // Ganti dengan kredensial Anda dari Firebase Console!
+        // DATA ANDA SUDAH BENAR
         const firebaseConfig = {
             apiKey: "AIzaSyB7ty5SHakCyAxgFozl8r2ViDYKnF8_t7Q",
             authDomain: "motor-speedometer-monitor.firebaseapp.com",
@@ -256,97 +255,111 @@
         const canvas = document.getElementById('speedCanvas');
         const ctx = canvas.getContext('2d');
         const maxRPM = 2400;
+        const centerX = 150;
+        const centerY = 150;
         
-        // Format waktu
-        function formatTime(timestamp) {
-            if (!timestamp) return 'Menunggu data...';
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('id-ID');
-        }
-        
-        // Draw speedometer gauge
+        // Draw speedometer gauge (diperbaiki untuk 300x300 canvas)
         function drawSpeedometer(rpm) {
             const angle = Math.min((rpm / maxRPM) * 180, 180);
             const rad = (angle * Math.PI) / 180;
             const startRad = Math.PI;
             const endRad = Math.PI + rad;
             
-            ctx.clearRect(0, 0, 280, 280);
+            ctx.clearRect(0, 0, 300, 300);
             
             // Background circle
             ctx.beginPath();
-            ctx.arc(140, 140, 120, 0, Math.PI * 2);
-            ctx.fillStyle = '#0f3460';
+            ctx.arc(centerX, centerY, 130, 0, Math.PI * 2);
+            ctx.fillStyle = '#0a1a2f';
             ctx.fill();
             
-            // Track arc (background)
+            // Outline circle
             ctx.beginPath();
-            ctx.arc(140, 140, 120, Math.PI, Math.PI * 2);
-            ctx.strokeStyle = '#2a4a7a';
-            ctx.lineWidth = 20;
+            ctx.arc(centerX, centerY, 130, 0, Math.PI * 2);
+            ctx.strokeStyle = '#00ff8844';
+            ctx.lineWidth = 2;
             ctx.stroke();
             
-            // Active arc (green)
+            // Track arc (background - grey)
             ctx.beginPath();
-            ctx.arc(140, 140, 120, Math.PI, endRad);
+            ctx.arc(centerX, centerY, 115, Math.PI, Math.PI * 2);
+            ctx.strokeStyle = '#2a3a5a';
+            ctx.lineWidth = 25;
+            ctx.stroke();
+            
+            // Active arc (green - sesuai RPM)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 115, Math.PI, endRad);
             ctx.strokeStyle = '#00ff88';
-            ctx.lineWidth = 20;
+            ctx.lineWidth = 25;
             ctx.stroke();
             
-            // Tick marks
+            // Inner circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f2a4a';
+            ctx.fill();
+            
+            // Tick marks and labels
             for (let i = 0; i <= 12; i++) {
                 const tickAngle = (i * 15) * Math.PI / 180;
-                const x1 = 140 + 110 * Math.cos(Math.PI + tickAngle);
-                const y1 = 140 + 110 * Math.sin(Math.PI + tickAngle);
-                const x2 = 140 + 95 * Math.cos(Math.PI + tickAngle);
-                const y2 = 140 + 95 * Math.sin(Math.PI + tickAngle);
+                const radiusOuter = 125;
+                const radiusInner = 110;
+                
+                const x1 = centerX + radiusInner * Math.cos(Math.PI + tickAngle);
+                const y1 = centerY + radiusInner * Math.sin(Math.PI + tickAngle);
+                const x2 = centerX + radiusOuter * Math.cos(Math.PI + tickAngle);
+                const y2 = centerY + radiusOuter * Math.sin(Math.PI + tickAngle);
                 
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
-                ctx.strokeStyle = '#aaa';
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#ffffffaa';
+                ctx.lineWidth = 2;
                 ctx.stroke();
                 
                 const rpmVal = i * 200;
-                const labelX = 140 + 135 * Math.cos(Math.PI + tickAngle);
-                const labelY = 140 + 135 * Math.sin(Math.PI + tickAngle);
+                const labelRadius = 100;
+                const labelX = centerX + labelRadius * Math.cos(Math.PI + tickAngle);
+                const labelY = centerY + labelRadius * Math.sin(Math.PI + tickAngle);
                 ctx.fillStyle = '#ccc';
-                ctx.font = '10px Arial';
-                ctx.fillText(rpmVal, labelX - 8, labelY + 4);
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(rpmVal, labelX, labelY);
             }
             
             // Pointer
-            const pointerX = 140 + 100 * Math.cos(endRad);
-            const pointerY = 140 + 100 * Math.sin(endRad);
+            const pointerLength = 90;
+            const pointerX = centerX + pointerLength * Math.cos(endRad);
+            const pointerY = centerY + pointerLength * Math.sin(endRad);
             
             ctx.beginPath();
-            ctx.moveTo(140, 140);
+            ctx.moveTo(centerX, centerY);
             ctx.lineTo(pointerX, pointerY);
             ctx.strokeStyle = '#ff4444';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4;
             ctx.stroke();
             
-            // Center dot
+            // Center circle
             ctx.beginPath();
-            ctx.arc(140, 140, 12, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
             ctx.fillStyle = '#ff4444';
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(140, 140, 5, 0, Math.PI * 2);
-            ctx.fillStyle = 'white';
+            ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
             ctx.fill();
         }
         
         // ========== REAL-TIME LISTENER ==========
-        // Ini MAGIC nya! Data update otomatis tanpa refresh
         const motorRef = database.ref('/motor');
         
         motorRef.on('value', (snapshot) => {
             const data = snapshot.val();
+            console.log("Data dari Firebase:", data);
             
             if (data) {
-                // Update UI dengan data terbaru
                 document.getElementById('rpm').innerText = Math.round(data.rpm || 0);
                 document.getElementById('voltage').innerHTML = (data.voltage || 0).toFixed(2);
                 document.getElementById('current').innerHTML = (data.current || 0).toFixed(3);
@@ -362,9 +375,12 @@
                     if (timeAgo < 10) {
                         document.getElementById('lastUpdate').innerHTML = `🟢 Update: ${timeAgo} detik yang lalu`;
                         document.getElementById('lastUpdate').style.color = '#00ff88';
-                    } else {
+                    } else if (timeAgo < 30) {
                         document.getElementById('lastUpdate').innerHTML = `🟡 Update: ${timeAgo} detik yang lalu`;
                         document.getElementById('lastUpdate').style.color = '#ffaa00';
+                    } else {
+                        document.getElementById('lastUpdate').innerHTML = `🔴 Update: ${timeAgo} detik yang lalu (data mungkin sudah lama)`;
+                        document.getElementById('lastUpdate').style.color = '#ff4444';
                     }
                 }
                 
@@ -373,6 +389,7 @@
             } else {
                 document.getElementById('statusBadge').innerHTML = '🟡 Menunggu data dari ESP32...';
                 document.getElementById('statusBadge').style.background = 'rgba(255,170,0,0.2)';
+                drawSpeedometer(0);
             }
         }, (error) => {
             console.error('Firebase error:', error);
@@ -382,6 +399,8 @@
         
         // Initial draw
         drawSpeedometer(0);
+        
+        console.log("Web siap, menunggu data dari Firebase...");
     </script>
 </body>
 </html>
