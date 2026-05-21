@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Motor Speedometer - Real-time Monitor</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #00ff88;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.8em;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+        }
+        
+        .gauge-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 20px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            background: #0f3460;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(0,255,136,0.2);
+        }
+        
+        .rpm-value {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #00ff88;
+            margin: 10px 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .card {
+            background: rgba(15,52,96,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(0,255,136,0.2);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: #00ff88;
+        }
+        
+        .card-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .card-label {
+            font-size: 0.7em;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        .temp-card {
+            grid-column: span 2;
+            background: rgba(15,52,96,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,170,0,0.3);
+        }
+        
+        .temp-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffaa00;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .info-note {
+            text-align: center;
+            font-size: 0.7em;
+            color: #ffaa00;
+            margin: 10px 0;
+            background: rgba(255,170,0,0.1);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .last-update {
+            text-align: center;
+            font-size: 0.7em;
+            color: #666;
+            margin-top: 15px;
+        }
+        
+        footer {
+            text-align: center;
+            font-size: 0.7em;
+            color: #444;
+            margin-top: 20px;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .online {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ MOTOR SPEEDOMETER ⚡</h1>
+        <div class="subtitle">Real-time Monitoring System</div>
+        
+        <div class="status-badge">
+            <span class="badge" id="statusBadge">🟢 Terhubung ke Firebase</span>
+        </div>
+        
+        <div class="info-note">
+            ⚠️ Joystick: Hanya sudut 0-270° yang menggerakkan motor<br>
+            Sudut 271-359° → Motor DIAM (0 RPM)
+        </div>
+        
+        <div class="gauge-container">
+            <canvas id="speedCanvas" width="280" height="280"></canvas>
+        </div>
+        
+        <div class="rpm-value">
+            <span id="rpm">0</span> RPM
+        </div>
+        
+        <div class="stats">
+            <div class="card">
+                <div class="card-value" id="voltage">--</div>
+                <div class="card-label">Tegangan (V)</div>
+            </div>
+            <div class="card">
+                <div class="card-value" id="current">--</div>
+                <div class="card-label">Arus (A)</div>
+            </div>
+            <div class="card">
+                <div class="card-value" id="battery">--</div>
+                <div class="card-label">Baterai (%)</div>
+            </div>
+            <div class="temp-card">
+                <div class="temp-value" id="temperature">--</div>
+                <div class="card-label">Suhu LM35 (°C)</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="batteryBar"></div>
+        </div>
+        
+        <div class="last-update" id="lastUpdate">
+            Menunggu data...
+        </div>
+        
+        <footer>
+            Max Speed: 2400 RPM | Coulomb Counting | Firebase Realtime Sync
+        </footer>
+    </div>
+    
+    <script>
+        // ========== KONFIGURASI FIREBASE ==========
+        // Ganti dengan kredensial Anda dari Firebase Console!
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7ty5SHakCyAxgFozl8r2ViDYKnF8_t7Q",
+            authDomain: "motor-speedometer-monitor.firebaseapp.com",
+            databaseURL: "https://motor-speedometer-monitor-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "motor-speedometer-monitor",
+            storageBucket: "motor-speedometer-monitor.firebasestorage.app",
+            messagingSenderId: "664889992230",
+            appId: "1:664889992230:web:5f3c093bdfb6457bbbf2e7"
+        };
+        
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Variabel untuk speedometer
+        const canvas = document.getElementById('speedCanvas');
+        const ctx = canvas.getContext('2d');
+        const maxRPM = 2400;
+        
+        // Format waktu
+        function formatTime(timestamp) {
+            if (!timestamp) return 'Menunggu data...';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('id-ID');
+        }
+        
+        // Draw speedometer gauge
+        function drawSpeedometer(rpm) {
+            const angle = Math.min((rpm / maxRPM) * 180, 180);
+            const rad = (angle * Math.PI) / 180;
+            const startRad = Math.PI;
+            const endRad = Math.PI + rad;
+            
+            ctx.clearRect(0, 0, 280, 280);
+            
+            // Background circle
+            ctx.beginPath();
+            ctx.arc(140, 140, 120, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f3460';
+            ctx.fill();
+            
+            // Track arc (background)
+            ctx.beginPath();
+            ctx.arc(140, 140, 120, Math.PI, Math.PI * 2);
+            ctx.strokeStyle = '#2a4a7a';
+            ctx.lineWidth = 20;
+            ctx.stroke();
+            
+            // Active arc (green)
+            ctx.beginPath();
+            ctx.arc(140, 140, 120, Math.PI, endRad);
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 20;
+            ctx.stroke();
+            
+            // Tick marks
+            for (let i = 0; i <= 12; i++) {
+                const tickAngle = (i * 15) * Math.PI / 180;
+                const x1 = 140 + 110 * Math.cos(Math.PI + tickAngle);
+                const y1 = 140 + 110 * Math.sin(Math.PI + tickAngle);
+                const x2 = 140 + 95 * Math.cos(Math.PI + tickAngle);
+                const y2 = 140 + 95 * Math.sin(Math.PI + tickAngle);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                const rpmVal = i * 200;
+                const labelX = 140 + 135 * Math.cos(Math.PI + tickAngle);
+                const labelY = 140 + 135 * Math.sin(Math.PI + tickAngle);
+                ctx.fillStyle = '#ccc';
+                ctx.font = '10px Arial';
+                ctx.fillText(rpmVal, labelX - 8, labelY + 4);
+            }
+            
+            // Pointer
+            const pointerX = 140 + 100 * Math.cos(endRad);
+            const pointerY = 140 + 100 * Math.sin(endRad);
+            
+            ctx.beginPath();
+            ctx.moveTo(140, 140);
+            ctx.lineTo(pointerX, pointerY);
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Center dot
+            ctx.beginPath();
+            ctx.arc(140, 140, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff4444';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(140, 140, 5, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+        }
+        
+        // ========== REAL-TIME LISTENER ==========
+        // Ini MAGIC nya! Data update otomatis tanpa refresh
+        const motorRef = database.ref('/motor');
+        
+        motorRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            if (data) {
+                // Update UI dengan data terbaru
+                document.getElementById('rpm').innerText = Math.round(data.rpm || 0);
+                document.getElementById('voltage').innerHTML = (data.voltage || 0).toFixed(2);
+                document.getElementById('current').innerHTML = (data.current || 0).toFixed(3);
+                document.getElementById('battery').innerHTML = (data.battery_percent || 0).toFixed(1);
+                document.getElementById('temperature').innerHTML = (data.temperature || 0).toFixed(1);
+                document.getElementById('batteryBar').style.width = (data.battery_percent || 0) + '%';
+                
+                drawSpeedometer(data.rpm || 0);
+                
+                const updateTime = data.last_update;
+                if (updateTime) {
+                    const timeAgo = Math.floor((Date.now() - updateTime) / 1000);
+                    if (timeAgo < 10) {
+                        document.getElementById('lastUpdate').innerHTML = `🟢 Update: ${timeAgo} detik yang lalu`;
+                        document.getElementById('lastUpdate').style.color = '#00ff88';
+                    } else {
+                        document.getElementById('lastUpdate').innerHTML = `🟡 Update: ${timeAgo} detik yang lalu`;
+                        document.getElementById('lastUpdate').style.color = '#ffaa00';
+                    }
+                }
+                
+                document.getElementById('statusBadge').innerHTML = '🟢 Terhubung ke Firebase';
+                document.getElementById('statusBadge').style.background = 'rgba(0,255,136,0.2)';
+            } else {
+                document.getElementById('statusBadge').innerHTML = '🟡 Menunggu data dari ESP32...';
+                document.getElementById('statusBadge').style.background = 'rgba(255,170,0,0.2)';
+            }
+        }, (error) => {
+            console.error('Firebase error:', error);
+            document.getElementById('statusBadge').innerHTML = '🔴 Gagal konek ke Firebase';
+            document.getElementById('statusBadge').style.background = 'rgba(255,68,68,0.2)';
+        });
+        
+        // Initial draw
+        drawSpeedometer(0);
+    </script>
+</body>
+</html>
