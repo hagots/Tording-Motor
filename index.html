@@ -15,8 +15,7 @@
         .status-badge { text-align: center; margin-bottom: 20px; }
         .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; background: rgba(0,255,136,0.2); color: #00ff88; }
         .gauge-container { position: relative; width: 350px; height: 350px; margin: 0 auto 15px; }
-        .speedometer-svg { width: 100%; height: 100%; filter: drop-shadow(0 0 15px rgba(0,255,136,0.3)); }
-        .needle { transform-origin: 175px 175px; transition: transform 0.2s ease-out; }
+        canvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 0 30px rgba(0,255,136,0.2); }
         .rpm-value { text-align: center; font-size: 2.5em; font-weight: bold; color: #00ff88; margin: 5px 0; }
         .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
         .card { background: rgba(15,52,96,0.8); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid rgba(0,255,136,0.2); transition: transform 0.2s; }
@@ -40,66 +39,7 @@
     <div class="info-note">⚠️ Joystick: Hanya sudut 0-270° yang menggerakkan motor<br>Sudut 271-359° → Motor DIAM (0 RPM)</div>
     
     <div class="gauge-container">
-        <svg class="speedometer-svg" viewBox="0 0 350 350">
-            <!-- Background -->
-            <circle cx="175" cy="175" r="160" fill="#0a1a2f" stroke="#00ff8844" stroke-width="2"/>
-            
-            <!-- Track arc (background abu-abu) -->
-            <path d="M 35 175 A 140 140 0 0 1 315 175" fill="none" stroke="#2a3a5a" stroke-width="28"/>
-            
-            <!-- Active arc (hijau) -->
-            <path id="activeArc" d="M 35 175 A 140 140 0 0 1 315 175" fill="none" stroke="#00ff88" stroke-width="28" stroke-linecap="round"/>
-            
-            <!-- Inner circle -->
-            <circle cx="175" cy="175" r="95" fill="#0f2a4a" stroke="#00ff8844" stroke-width="1.5"/>
-            
-            <!-- 
-                Tick marks dan labels dengan perhitungan:
-                - 0 RPM: sudut 180° (kiri) - titik (35, 175)
-                - 2400 RPM: sudut 0° (kanan) - titik (315, 175)
-                - Setiap kelipatan 400 RPM = 180°/6 = 30° per step
-                - Sudut: 0=180°, 400=150°, 800=120°, 1200=90°, 1600=60°, 2000=30°, 2400=0°
-            -->
-            
-            <!-- 0 RPM (180°) - Kiri -->
-            <line x1="40" y1="175" x2="52" y2="175" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="32" y="182" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">0</text>
-            
-            <!-- 400 RPM (150°) -->
-            <line x1="48" y1="136" x2="60" y2="140" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="38" y="128" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">400</text>
-            
-            <!-- 800 RPM (120°) -->
-            <line x1="79" y1="99" x2="88" y2="107" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="72" y="90" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">800</text>
-            
-            <!-- 1200 RPM (90°) - Atas -->
-            <line x1="126" y1="72" x2="130" y2="84" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="122" y="58" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1200</text>
-            
-            <!-- 1600 RPM (60°) -->
-            <line x1="179" y1="62" x2="179" y2="74" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="179" y="48" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1600</text>
-            
-            <!-- 2000 RPM (30°) -->
-            <line x1="232" y1="72" x2="224" y2="80" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="238" y="62" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2000</text>
-            
-            <!-- 2400 RPM (0°) - Kanan -->
-            <line x1="315" y1="175" x2="303" y2="175" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="322" y="182" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2400</text>
-            
-            <!-- Jarum -->
-            <g class="needle" style="transform: rotate(-90deg);">
-                <line x1="175" y1="175" x2="175" y2="65" stroke="#ff4444" stroke-width="4" stroke-linecap="round"/>
-                <line x1="175" y1="175" x2="175" y2="65" stroke="#ff8888" stroke-width="1.5" stroke-linecap="round"/>
-            </g>
-            
-            <!-- Center circle -->
-            <circle cx="175" cy="175" r="22" fill="#1a1a2e" stroke="#ff4444" stroke-width="3"/>
-            <circle cx="175" cy="175" r="10" fill="#ff4444"/>
-            <circle cx="175" cy="175" r="4" fill="#ffffff"/>
-        </svg>
+        <canvas id="speedCanvas" width="700" height="700" style="width:350px;height:350px"></canvas>
     </div>
     
     <div class="rpm-value"><span id="rpm">0</span> RPM</div>
@@ -129,32 +69,161 @@
     
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    const maxRPM = 2400;
     
-    function updateSpeedometer(rpm) {
-        // Konversi RPM ke sudut: 0 RPM = -90°, 2400 RPM = +90°
-        const angle = Math.min((rpm / maxRPM) * 180, 180);
-        const needleAngle = -90 + angle;
-        document.querySelector('.needle').style.transform = `rotate(${needleAngle}deg)`;
+    const canvas = document.getElementById('speedCanvas');
+    const ctx = canvas.getContext('2d');
+    const maxRPM = 2400;
+    const centerX = 350;
+    const centerY = 350;
+    
+    // Aktifkan anti-aliasing
+    ctx.imageSmoothingEnabled = true;
+    
+    function drawSpeedometer(rpm) {
+        // Clear canvas
+        ctx.clearRect(0, 0, 700, 700);
         
-        // Update arc hijau
-        const endAngle = Math.PI + (angle * Math.PI / 180);
-        const endX = 175 + 140 * Math.cos(endAngle);
-        const endY = 175 + 140 * Math.sin(endAngle);
-        const largeArcFlag = angle > 180 ? 1 : 0;
-        document.getElementById('activeArc').setAttribute('d', `M 35 175 A 140 140 0 ${largeArcFlag} 1 ${endX} ${endY}`);
+        // Background luar
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 330, 0, Math.PI * 2);
+        ctx.fillStyle = '#0a1a2f';
+        ctx.fill();
+        
+        // Border luar
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 325, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Hitung sudut berdasarkan RPM
+        const angle = Math.min((rpm / maxRPM) * 180, 180);
+        const rad = (angle * Math.PI) / 180;
+        const endRad = Math.PI + rad;
+        
+        // Track arc (background abu-abu)
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 280, Math.PI, Math.PI * 2);
+        ctx.strokeStyle = '#2a3a5a';
+        ctx.lineWidth = 45;
+        ctx.stroke();
+        
+        // Active arc (hijau)
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 280, Math.PI, endRad);
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 45;
+        ctx.stroke();
+        
+        // Inner circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 190, 0, Math.PI * 2);
+        ctx.fillStyle = '#0f2a4a';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 190, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Gambar tick marks dan angka
+        const values = [0, 400, 800, 1200, 1600, 2000, 2400];
+        const angles = [180, 150, 120, 90, 60, 30, 0]; // derajat
+        
+        for (let i = 0; i < values.length; i++) {
+            const deg = angles[i];
+            const radAngle = deg * Math.PI / 180;
+            
+            // Posisi tick mark
+            const innerRadius = 260;
+            const outerRadius = 280;
+            const x1 = centerX + innerRadius * Math.cos(radAngle);
+            const y1 = centerY + innerRadius * Math.sin(radAngle);
+            const x2 = centerX + outerRadius * Math.cos(radAngle);
+            const y2 = centerY + outerRadius * Math.sin(radAngle);
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Posisi angka
+            const textRadius = 225;
+            const textX = centerX + textRadius * Math.cos(radAngle);
+            const textY = centerY + textRadius * Math.sin(radAngle);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 22px "Segoe UI", Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(values[i].toString(), textX, textY);
+        }
+        
+        // Label "RPM"
+        ctx.fillStyle = '#888888';
+        ctx.font = '16px "Segoe UI", Arial';
+        ctx.fillText('RPM', centerX, centerY + 130);
+        
+        // Jarum pointer
+        const pointerLength = 230;
+        const pointerX = centerX + pointerLength * Math.cos(endRad);
+        const pointerY = centerY + pointerLength * Math.sin(endRad);
+        
+        // Jarum utama
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(pointerX, pointerY);
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        
+        // Outline jarum
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(pointerX, pointerY);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Center circle luar
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 28, 0, Math.PI * 2);
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 28, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        
+        // Center circle dalam
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff4444';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
     }
     
+    // Initial draw
+    drawSpeedometer(0);
+    
+    // Firebase listener
     database.ref('/motor').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            document.getElementById('rpm').innerText = Math.round(data.rpm || 0);
+            const rpm = Math.round(data.rpm || 0);
+            document.getElementById('rpm').innerText = rpm;
             document.getElementById('voltage').innerHTML = (data.voltage || 0).toFixed(2);
             document.getElementById('current').innerHTML = (data.current || 0).toFixed(3);
             document.getElementById('battery').innerHTML = (data.battery_percent || 0).toFixed(1);
             document.getElementById('temperature').innerHTML = (data.temperature || 0).toFixed(1);
             document.getElementById('batteryBar').style.width = (data.battery_percent || 0) + '%';
-            updateSpeedometer(data.rpm || 0);
+            drawSpeedometer(rpm);
             
             const timeAgo = Math.floor((Date.now() - (data.last_update || 0)) / 1000);
             const el = document.getElementById('lastUpdate');
@@ -165,7 +234,7 @@
             document.getElementById('statusBadge').innerHTML = '🟢 Terhubung ke Firebase';
             document.getElementById('statusBadge').style.background = 'rgba(0,255,136,0.2)';
         } else {
-            updateSpeedometer(0);
+            drawSpeedometer(0);
             document.getElementById('statusBadge').innerHTML = '🟡 Menunggu data dari ESP32...';
             document.getElementById('statusBadge').style.background = 'rgba(255,170,0,0.2)';
         }
