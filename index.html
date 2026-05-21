@@ -4,377 +4,169 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Motor Speedometer - Real-time Monitor</title>
-    
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 650px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            text-align: center;
-            font-size: 1.8em;
-            margin-bottom: 10px;
-            color: #00ff88;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #888;
-            font-size: 0.8em;
-            margin-bottom: 20px;
-        }
-        
-        .status-badge {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            background: rgba(0,255,136,0.2);
-            color: #00ff88;
-        }
-        
-        .gauge-container {
-            position: relative;
-            width: 350px;
-            height: 350px;
-            margin: 0 auto 15px;
-        }
-        
-        .speedometer-svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 0 15px rgba(0,255,136,0.3));
-        }
-        
-        .needle {
-            transform-origin: 175px 175px;
-            transition: transform 0.2s ease-out;
-        }
-        
-        .rpm-value {
-            text-align: center;
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #00ff88;
-            margin: 5px 0;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .card {
-            background: rgba(15,52,96,0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            border: 1px solid rgba(0,255,136,0.2);
-            transition: transform 0.2s;
-        }
-        
-        .card:hover {
-            transform: translateY(-3px);
-            border-color: #00ff88;
-        }
-        
-        .card-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #00ff88;
-        }
-        
-        .card-label {
-            font-size: 0.8em;
-            color: #aaa;
-            margin-top: 5px;
-        }
-        
-        .temp-card {
-            grid-column: span 2;
-            background: rgba(15,52,96,0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            border: 1px solid rgba(255,170,0,0.3);
-        }
-        
-        .temp-value {
-            font-size: 2.2em;
-            font-weight: bold;
-            color: #ffaa00;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00cc66);
-            width: 0%;
-            border-radius: 10px;
-            transition: width 0.3s ease;
-        }
-        
-        .info-note {
-            text-align: center;
-            font-size: 0.7em;
-            color: #ffaa00;
-            margin: 10px 0;
-            background: rgba(255,170,0,0.1);
-            padding: 8px;
-            border-radius: 8px;
-        }
-        
-        .last-update {
-            text-align: center;
-            font-size: 0.8em;
-            margin-top: 15px;
-        }
-        
-        footer {
-            text-align: center;
-            font-size: 0.7em;
-            color: #444;
-            margin-top: 20px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #0a0a1a, #1a1a2e); color: white; min-height: 100vh; padding: 20px; }
+        .container { max-width: 650px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 1.8em; margin-bottom: 10px; color: #00ff88; }
+        .subtitle { text-align: center; color: #888; font-size: 0.8em; margin-bottom: 20px; }
+        .status-badge { text-align: center; margin-bottom: 20px; }
+        .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; background: rgba(0,255,136,0.2); color: #00ff88; }
+        .gauge-container { position: relative; width: 350px; height: 350px; margin: 0 auto 15px; }
+        .speedometer-svg { width: 100%; height: 100%; filter: drop-shadow(0 0 15px rgba(0,255,136,0.3)); }
+        .needle { transform-origin: 175px 175px; transition: transform 0.2s ease-out; }
+        .rpm-value { text-align: center; font-size: 2.5em; font-weight: bold; color: #00ff88; margin: 5px 0; }
+        .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
+        .card { background: rgba(15,52,96,0.8); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid rgba(0,255,136,0.2); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); border-color: #00ff88; }
+        .card-value { font-size: 1.8em; font-weight: bold; color: #00ff88; }
+        .card-label { font-size: 0.8em; color: #aaa; margin-top: 5px; }
+        .temp-card { grid-column: span 2; background: rgba(15,52,96,0.8); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; text-align: center; border: 1px solid rgba(255,170,0,0.3); }
+        .temp-value { font-size: 2.2em; font-weight: bold; color: #ffaa00; }
+        .progress-bar { width: 100%; height: 20px; background: #333; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00cc66); width: 0%; border-radius: 10px; transition: width 0.3s ease; }
+        .info-note { text-align: center; font-size: 0.7em; color: #ffaa00; margin: 10px 0; background: rgba(255,170,0,0.1); padding: 8px; border-radius: 8px; }
+        .last-update { text-align: center; font-size: 0.8em; margin-top: 15px; }
+        footer { text-align: center; font-size: 0.7em; color: #444; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>⚡ MOTOR SPEEDOMETER ⚡</h1>
-        <div class="subtitle">Real-time Monitoring System</div>
-        
-        <div class="status-badge">
-            <span class="badge" id="statusBadge">🟢 Terhubung ke Firebase</span>
-        </div>
-        
-        <div class="info-note">
-            ⚠️ Joystick: Hanya sudut 0-270° yang menggerakkan motor<br>
-            Sudut 271-359° → Motor DIAM (0 RPM)
-        </div>
-        
-        <div class="gauge-container">
-            <svg class="speedometer-svg" viewBox="0 0 350 350">
-                <!-- Background -->
-                <circle cx="175" cy="175" r="160" fill="#0a1a2f" stroke="#00ff8844" stroke-width="2"/>
-                
-                <!-- Track arc (background abu-abu) -->
-                <path id="trackArc" d="M 35 175 A 140 140 0 0 1 315 175" fill="none" stroke="#2a3a5a" stroke-width="28"/>
-                
-                <!-- Active arc (hijau) - akan diupdate via JS -->
-                <path id="activeArc" d="M 35 175 A 140 140 0 0 1 315 175" fill="none" stroke="#00ff88" stroke-width="28" stroke-linecap="round"/>
-                
-                <!-- Inner circle -->
-                <circle cx="175" cy="175" r="95" fill="#0f2a4a" stroke="#00ff8844" stroke-width="1.5"/>
-                
-                <!-- Tick marks and labels -->
-                <!-- 0 -->
-                <line x1="40" y1="175" x2="52" y2="175" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="35" y="178" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">0</text>
-                
-                <!-- 400 -->
-                <line x1="48" y1="136" x2="60" y2="140" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="40" y="130" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">400</text>
-                
-                <!-- 800 -->
-                <line x1="79" y1="99" x2="88" y2="107" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="70" y="90" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">800</text>
-                
-                <!-- 1200 -->
-                <line x1="126" y1="72" x2="130" y2="84" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="120" y="58" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1200</text>
-                
-                <!-- 1600 -->
-                <line x1="179" y1="62" x2="179" y2="74" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="179" y="48" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1600</text>
-                
-                <!-- 2000 -->
-                <line x1="232" y1="72" x2="228" y2="84" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="240" y="58" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2000</text>
-                
-                <!-- 2400 -->
-                <line x1="271" y1="99" x2="262" y2="107" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="280" y="90" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2400</text>
-                
-                <!-- Jarum/Needle -->
-                <g class="needle" style="transform: rotate(-90deg);">
-                    <line x1="175" y1="175" x2="175" y2="65" stroke="#ff4444" stroke-width="4" stroke-linecap="round"/>
-                    <line x1="175" y1="175" x2="175" y2="65" stroke="#ff8888" stroke-width="1.5" stroke-linecap="round"/>
-                </g>
-                
-                <!-- Center circle luar -->
-                <circle cx="175" cy="175" r="22" fill="#1a1a2e" stroke="#ff4444" stroke-width="3"/>
-                
-                <!-- Center circle dalam -->
-                <circle cx="175" cy="175" r="10" fill="#ff4444"/>
-                <circle cx="175" cy="175" r="4" fill="#ffffff"/>
-            </svg>
-        </div>
-        
-        <div class="rpm-value">
-            <span id="rpm">0</span> RPM
-        </div>
-        
-        <div class="stats">
-            <div class="card">
-                <div class="card-value" id="voltage">--</div>
-                <div class="card-label">Tegangan (V)</div>
-            </div>
-            <div class="card">
-                <div class="card-value" id="current">--</div>
-                <div class="card-label">Arus (A)</div>
-            </div>
-            <div class="card">
-                <div class="card-value" id="battery">--</div>
-                <div class="card-label">Baterai (%)</div>
-            </div>
-            <div class="temp-card">
-                <div class="temp-value" id="temperature">--</div>
-                <div class="card-label">Suhu LM35 (°C)</div>
-            </div>
-        </div>
-        
-        <div class="progress-bar">
-            <div class="progress-fill" id="batteryBar"></div>
-        </div>
-        
-        <div class="last-update" id="lastUpdate">
-            Menunggu data...
-        </div>
-        
-        <footer>
-            Max Speed: 2400 RPM | Coulomb Counting | Firebase Realtime Sync
-        </footer>
+<div class="container">
+    <h1>⚡ MOTOR SPEEDOMETER ⚡</h1>
+    <div class="subtitle">Real-time Monitoring System</div>
+    <div class="status-badge"><span class="badge" id="statusBadge">🟢 Terhubung ke Firebase</span></div>
+    <div class="info-note">⚠️ Joystick: Hanya sudut 0-270° yang menggerakkan motor<br>Sudut 271-359° → Motor DIAM (0 RPM)</div>
+    
+    <div class="gauge-container">
+        <svg class="speedometer-svg" viewBox="0 0 350 350">
+            <!-- Background -->
+            <circle cx="175" cy="175" r="160" fill="#0a1a2f" stroke="#00ff8844" stroke-width="2"/>
+            
+            <!-- Track arc (background abu-abu) -->
+            <path d="M 35 175 A 140 140 0 0 1 315 175" fill="none" stroke="#2a3a5a" stroke-width="28"/>
+            
+            <!-- Active arc (hijau) -->
+            <path id="activeArc" d="M 35 175 A 140 140 0 0 1 315 175" fill="none" stroke="#00ff88" stroke-width="28" stroke-linecap="round"/>
+            
+            <!-- Inner circle -->
+            <circle cx="175" cy="175" r="95" fill="#0f2a4a" stroke="#00ff8844" stroke-width="1.5"/>
+            
+            <!-- Tick marks dan labels dengan posisi yang tepat -->
+            <!-- 0 (kiri - 180 derajat) -->
+            <line x1="40" y1="175" x2="52" y2="175" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="35" y="180" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">0</text>
+            
+            <!-- 400 (sekitar 150 derajat) -->
+            <line x1="48" y1="136" x2="60" y2="140" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="40" y="128" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">400</text>
+            
+            <!-- 800 (sekitar 120 derajat) -->
+            <line x1="79" y1="99" x2="88" y2="107" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="70" y="88" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">800</text>
+            
+            <!-- 1200 (90 derajat - atas) -->
+            <line x1="126" y1="72" x2="130" y2="84" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="120" y="58" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1200</text>
+            
+            <!-- 1600 (sekitar 60 derajat) -->
+            <line x1="179" y1="62" x2="179" y2="74" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="179" y="48" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1600</text>
+            
+            <!-- 2000 (sekitar 30 derajat) -->
+            <line x1="232" y1="72" x2="228" y2="84" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="240" y="58" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2000</text>
+            
+            <!-- 2400 (kanan - 0 derajat) -->
+            <line x1="315" y1="175" x2="303" y2="175" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="320" y="180" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2400</text>
+            
+            <!-- Jarum -->
+            <g class="needle" style="transform: rotate(-90deg);">
+                <line x1="175" y1="175" x2="175" y2="65" stroke="#ff4444" stroke-width="4" stroke-linecap="round"/>
+                <line x1="175" y1="175" x2="175" y2="65" stroke="#ff8888" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            
+            <!-- Center circle -->
+            <circle cx="175" cy="175" r="22" fill="#1a1a2e" stroke="#ff4444" stroke-width="3"/>
+            <circle cx="175" cy="175" r="10" fill="#ff4444"/>
+            <circle cx="175" cy="175" r="4" fill="#ffffff"/>
+        </svg>
     </div>
     
-    <script>
-        // ========== KONFIGURASI FIREBASE ==========
-        const firebaseConfig = {
-            apiKey: "AIzaSyB7ty5SHakCyAxgFozl8r2ViDYKnF8_t7Q",
-            authDomain: "motor-speedometer-monitor.firebaseapp.com",
-            databaseURL: "https://motor-speedometer-monitor-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "motor-speedometer-monitor",
-            storageBucket: "motor-speedometer-monitor.firebasestorage.app",
-            messagingSenderId: "664889992230",
-            appId: "1:664889992230:web:5f3c093bdfb6457bbbf2e7"
-        };
+    <div class="rpm-value"><span id="rpm">0</span> RPM</div>
+    
+    <div class="stats">
+        <div class="card"><div class="card-value" id="voltage">--</div><div class="card-label">Tegangan (V)</div></div>
+        <div class="card"><div class="card-value" id="current">--</div><div class="card-label">Arus (A)</div></div>
+        <div class="card"><div class="card-value" id="battery">--</div><div class="card-label">Baterai (%)</div></div>
+        <div class="temp-card"><div class="temp-value" id="temperature">--</div><div class="card-label">Suhu LM35 (°C)</div></div>
+    </div>
+    
+    <div class="progress-bar"><div class="progress-fill" id="batteryBar"></div></div>
+    <div class="last-update" id="lastUpdate">Menunggu data...</div>
+    <footer>Max Speed: 2400 RPM | Coulomb Counting | Firebase Realtime Sync</footer>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyB7ty5SHakCyAxgFozl8r2ViDYKnF8_t7Q",
+        authDomain: "motor-speedometer-monitor.firebaseapp.com",
+        databaseURL: "https://motor-speedometer-monitor-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "motor-speedometer-monitor",
+        storageBucket: "motor-speedometer-monitor.firebasestorage.app",
+        messagingSenderId: "664889992230",
+        appId: "1:664889992230:web:5f3c093bdfb6457bbbf2e7"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const maxRPM = 2400;
+    
+    function updateSpeedometer(rpm) {
+        // Konversi RPM ke sudut: 0 RPM = -90deg, 2400 RPM = 90deg
+        const angle = Math.min((rpm / maxRPM) * 180, 180);
+        const needleAngle = -90 + angle;
+        document.querySelector('.needle').style.transform = `rotate(${needleAngle}deg)`;
         
-        // Inisialisasi Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
-        const maxRPM = 2400;
-        const centerX = 175;
-        const centerY = 175;
-        
-        // Fungsi untuk update jarum dan arc hijau
-        function updateSpeedometer(rpm) {
-            // Konversi RPM ke sudut (0-180 derajat)
-            const angle = Math.min((rpm / maxRPM) * 180, 180);
+        // Update arc hijau
+        const endAngle = Math.PI + (angle * Math.PI / 180);
+        const endX = 175 + 140 * Math.cos(endAngle);
+        const endY = 175 + 140 * Math.sin(endAngle);
+        const largeArcFlag = angle > 180 ? 1 : 0;
+        document.getElementById('activeArc').setAttribute('d', `M 35 175 A 140 140 0 ${largeArcFlag} 1 ${endX} ${endY}`);
+    }
+    
+    database.ref('/motor').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById('rpm').innerText = Math.round(data.rpm || 0);
+            document.getElementById('voltage').innerHTML = (data.voltage || 0).toFixed(2);
+            document.getElementById('current').innerHTML = (data.current || 0).toFixed(3);
+            document.getElementById('battery').innerHTML = (data.battery_percent || 0).toFixed(1);
+            document.getElementById('temperature').innerHTML = (data.temperature || 0).toFixed(1);
+            document.getElementById('batteryBar').style.width = (data.battery_percent || 0) + '%';
+            updateSpeedometer(data.rpm || 0);
             
-            // Update jarum: -90 deg = 0 RPM, +90 deg = 2400 RPM
-            const needleAngle = -90 + angle;
-            const needle = document.querySelector('.needle');
-            needle.style.transform = `rotate(${needleAngle}deg)`;
+            const timeAgo = Math.floor((Date.now() - (data.last_update || 0)) / 1000);
+            const el = document.getElementById('lastUpdate');
+            if (timeAgo < 10) { el.innerHTML = `🟢 Update: ${timeAgo} detik yang lalu`; el.style.color = '#00ff88'; }
+            else if (timeAgo < 30) { el.innerHTML = `🟡 Update: ${timeAgo} detik yang lalu`; el.style.color = '#ffaa00'; }
+            else { el.innerHTML = `🔴 Update: ${timeAgo} detik yang lalu (data mungkin sudah lama)`; el.style.color = '#ff4444'; }
             
-            // Update arc hijau (active arc)
-            const endAngle = Math.PI + (angle * Math.PI / 180);
-            const endX = centerX + 140 * Math.cos(endAngle);
-            const endY = centerY + 140 * Math.sin(endAngle);
-            
-            // Tentukan flag besar arc (1 jika lebih dari 180 derajat)
-            const largeArcFlag = angle > 180 ? 1 : 0;
-            
-            // SVG arc path: mulai dari kiri (35,175) sampai ke posisi akhir
-            const startX = 35;
-            const startY = 175;
-            
-            const arcPath = `M ${startX} ${startY} A 140 140 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-            document.getElementById('activeArc').setAttribute('d', arcPath);
+            document.getElementById('statusBadge').innerHTML = '🟢 Terhubung ke Firebase';
+            document.getElementById('statusBadge').style.background = 'rgba(0,255,136,0.2)';
+        } else {
+            updateSpeedometer(0);
+            document.getElementById('statusBadge').innerHTML = '🟡 Menunggu data dari ESP32...';
+            document.getElementById('statusBadge').style.background = 'rgba(255,170,0,0.2)';
         }
-        
-        // ========== REAL-TIME LISTENER ==========
-        const motorRef = database.ref('/motor');
-        
-        motorRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            console.log("Data dari Firebase:", data);
-            
-            if (data) {
-                const rpm = data.rpm || 0;
-                document.getElementById('rpm').innerText = Math.round(rpm);
-                document.getElementById('voltage').innerHTML = (data.voltage || 0).toFixed(2);
-                document.getElementById('current').innerHTML = (data.current || 0).toFixed(3);
-                document.getElementById('battery').innerHTML = (data.battery_percent || 0).toFixed(1);
-                document.getElementById('temperature').innerHTML = (data.temperature || 0).toFixed(1);
-                document.getElementById('batteryBar').style.width = (data.battery_percent || 0) + '%';
-                
-                updateSpeedometer(rpm);
-                
-                const updateTime = data.last_update;
-                if (updateTime) {
-                    const timeAgo = Math.floor((Date.now() - updateTime) / 1000);
-                    if (timeAgo < 10) {
-                        document.getElementById('lastUpdate').innerHTML = `🟢 Update: ${timeAgo} detik yang lalu`;
-                        document.getElementById('lastUpdate').style.color = '#00ff88';
-                    } else if (timeAgo < 30) {
-                        document.getElementById('lastUpdate').innerHTML = `🟡 Update: ${timeAgo} detik yang lalu`;
-                        document.getElementById('lastUpdate').style.color = '#ffaa00';
-                    } else {
-                        document.getElementById('lastUpdate').innerHTML = `🔴 Update: ${timeAgo} detik yang lalu (data mungkin sudah lama)`;
-                        document.getElementById('lastUpdate').style.color = '#ff4444';
-                    }
-                }
-                
-                document.getElementById('statusBadge').innerHTML = '🟢 Terhubung ke Firebase';
-                document.getElementById('statusBadge').style.background = 'rgba(0,255,136,0.2)';
-            } else {
-                document.getElementById('statusBadge').innerHTML = '🟡 Menunggu data dari ESP32...';
-                document.getElementById('statusBadge').style.background = 'rgba(255,170,0,0.2)';
-                updateSpeedometer(0);
-            }
-        }, (error) => {
-            console.error('Firebase error:', error);
-            document.getElementById('statusBadge').innerHTML = '🔴 Gagal konek ke Firebase';
-            document.getElementById('statusBadge').style.background = 'rgba(255,68,68,0.2)';
-        });
-        
-        console.log("Web siap, menunggu data dari Firebase...");
-    </script>
+    }, (error) => {
+        console.error('Firebase error:', error);
+        document.getElementById('statusBadge').innerHTML = '🔴 Gagal konek ke Firebase';
+        document.getElementById('statusBadge').style.background = 'rgba(255,68,68,0.2)';
+    });
+</script>
 </body>
 </html>
