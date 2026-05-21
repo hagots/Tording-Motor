@@ -67,9 +67,7 @@
         canvas {
             width: 100%;
             height: 100%;
-            background: #0a1a2f;
-            border-radius: 50%;
-            box-shadow: 0 0 30px rgba(0,255,136,0.2);
+            display: block;
         }
         
         .rpm-value {
@@ -186,7 +184,7 @@
         </div>
         
         <div class="gauge-container">
-            <canvas id="speedCanvas" width="350" height="350"></canvas>
+            <canvas id="speedCanvas" width="700" height="700" style="width:350px;height:350px"></canvas>
         </div>
         
         <div class="rpm-value">
@@ -241,66 +239,65 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Variabel untuk speedometer
+        // Variabel untuk speedometer - RESOLUSI TINGGI (700x700)
         const canvas = document.getElementById('speedCanvas');
         const ctx = canvas.getContext('2d');
         const maxRPM = 2400;
-        const centerX = 175;
-        const centerY = 175;
+        const centerX = 350;    // 700/2
+        const centerY = 350;    // 700/2
         
-        // Clear canvas dengan background yang benar
-        function clearCanvas() {
+        // Fungsi untuk menggambar dengan resolusi tinggi
+        function drawSpeedometer(rpm) {
+            // Clear canvas dengan background
+            ctx.clearRect(0, 0, 700, 700);
+            
+            // Background lingkaran luar
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 165, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 330, 0, Math.PI * 2);
             ctx.fillStyle = '#0a1a2f';
             ctx.fill();
-        }
-        
-        // Draw speedometer gauge
-        function drawSpeedometer(rpm) {
-            clearCanvas();
+            
+            // Border lingkaran
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 325, 0, Math.PI * 2);
+            ctx.strokeStyle = '#00ff8844';
+            ctx.lineWidth = 4;
+            ctx.stroke();
             
             const angle = Math.min((rpm / maxRPM) * 180, 180);
             const rad = (angle * Math.PI) / 180;
             const endRad = Math.PI + rad;
             
-            // Border circle
+            // Track arc (background - grey)
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 160, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 285, Math.PI, Math.PI * 2);
+            ctx.strokeStyle = '#2a3a5a';
+            ctx.lineWidth = 50;
+            ctx.stroke();
+            
+            // Active arc (green - sesuai RPM)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 285, Math.PI, endRad);
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 50;
+            ctx.stroke();
+            
+            // Inner circle (lingkaran dalam untuk background angka)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f2a4a';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 200, 0, Math.PI * 2);
             ctx.strokeStyle = '#00ff8844';
             ctx.lineWidth = 3;
             ctx.stroke();
             
-            // Track arc (background)
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 140, Math.PI, Math.PI * 2);
-            ctx.strokeStyle = '#2a3a5a';
-            ctx.lineWidth = 28;
-            ctx.stroke();
-            
-            // Active arc (green)
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 140, Math.PI, endRad);
-            ctx.strokeStyle = '#00ff88';
-            ctx.lineWidth = 28;
-            ctx.stroke();
-            
-            // Inner circle
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 95, 0, Math.PI * 2);
-            ctx.fillStyle = '#0f2a4a';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 95, 0, Math.PI * 2);
-            ctx.strokeStyle = '#00ff8844';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // Tick marks dan labels - DIPERBAIKI posisinya
+            // Tick marks dan labels - dengan font lebih tajam
             for (let i = 0; i <= 12; i++) {
                 const tickAngle = (i * 15) * Math.PI / 180;
-                const radiusOuter = 152;
-                const radiusInner = 135;
+                const radiusOuter = 310;
+                const radiusInner = 275;
                 
                 const x1 = centerX + radiusInner * Math.cos(Math.PI + tickAngle);
                 const y1 = centerY + radiusInner * Math.sin(Math.PI + tickAngle);
@@ -311,35 +308,35 @@
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
                 ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 4;
                 ctx.stroke();
                 
                 // Angka RPM
                 const rpmVal = i * 200;
-                const labelRadius = 118;
+                const labelRadius = 240;
                 const labelX = centerX + labelRadius * Math.cos(Math.PI + tickAngle);
                 const labelY = centerY + labelRadius * Math.sin(Math.PI + tickAngle);
                 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 13px "Segoe UI", Arial';
+                ctx.font = 'bold 24px "Segoe UI", "Arial", sans-serif';
                 ctx.shadowBlur = 0;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(rpmVal.toString(), labelX, labelY);
             }
             
-            // Label "RPM x100" di tengah bawah
+            // Label "RPM" di tengah bawah
             ctx.fillStyle = '#888888';
-            ctx.font = '11px "Segoe UI", Arial';
-            ctx.fillText('RPM', centerX, centerY + 65);
+            ctx.font = '20px "Segoe UI", "Arial", sans-serif';
+            ctx.fillText('RPM', centerX, centerY + 130);
             
-            // Pointer/jarum
-            const pointerLength = 110;
-            const pointerWidth = 6;
+            // Pointer/jarum - lebih tajam
+            const pointerLength = 230;
+            const pointerWidth = 10;
             const pointerX = centerX + pointerLength * Math.cos(endRad);
             const pointerY = centerY + pointerLength * Math.sin(endRad);
             
-            // Gambar jarum lebih tebal dan jelas
+            // Jarum utama
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.lineTo(pointerX, pointerY);
@@ -347,29 +344,35 @@
             ctx.lineWidth = pointerWidth;
             ctx.stroke();
             
-            // Bayangan jarum
+            // Outline jarum agar lebih jelas
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.lineTo(pointerX, pointerY);
-            ctx.strokeStyle = '#ff6666';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ff8888';
+            ctx.lineWidth = 3;
             ctx.stroke();
             
             // Center circle - luar
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 35, 0, Math.PI * 2);
             ctx.fillStyle = '#1a1a2e';
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 35, 0, Math.PI * 2);
             ctx.strokeStyle = '#ff4444';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 5;
             ctx.stroke();
             
-            // Center circle - dalam
+            // Center circle - dalam (titik merah)
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
             ctx.fillStyle = '#ff4444';
+            ctx.fill();
+            
+            // Lingkaran putih di tengah
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
             ctx.fill();
         }
         
