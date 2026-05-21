@@ -53,34 +53,41 @@
             <!-- Inner circle -->
             <circle cx="175" cy="175" r="95" fill="#0f2a4a" stroke="#00ff8844" stroke-width="1.5"/>
             
-            <!-- Tick marks dan labels dengan posisi yang tepat -->
-            <!-- 0 (kiri - 180 derajat) -->
+            <!-- 
+                Tick marks dan labels dengan perhitungan:
+                - 0 RPM: sudut 180° (kiri) - titik (35, 175)
+                - 2400 RPM: sudut 0° (kanan) - titik (315, 175)
+                - Setiap kelipatan 400 RPM = 180°/6 = 30° per step
+                - Sudut: 0=180°, 400=150°, 800=120°, 1200=90°, 1600=60°, 2000=30°, 2400=0°
+            -->
+            
+            <!-- 0 RPM (180°) - Kiri -->
             <line x1="40" y1="175" x2="52" y2="175" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="35" y="180" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">0</text>
+            <text x="32" y="182" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">0</text>
             
-            <!-- 400 (sekitar 150 derajat) -->
+            <!-- 400 RPM (150°) -->
             <line x1="48" y1="136" x2="60" y2="140" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="40" y="128" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">400</text>
+            <text x="38" y="128" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">400</text>
             
-            <!-- 800 (sekitar 120 derajat) -->
+            <!-- 800 RPM (120°) -->
             <line x1="79" y1="99" x2="88" y2="107" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="70" y="88" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">800</text>
+            <text x="72" y="90" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">800</text>
             
-            <!-- 1200 (90 derajat - atas) -->
+            <!-- 1200 RPM (90°) - Atas -->
             <line x1="126" y1="72" x2="130" y2="84" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="120" y="58" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1200</text>
+            <text x="122" y="58" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1200</text>
             
-            <!-- 1600 (sekitar 60 derajat) -->
+            <!-- 1600 RPM (60°) -->
             <line x1="179" y1="62" x2="179" y2="74" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="179" y="48" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1600</text>
+            <text x="179" y="48" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">1600</text>
             
-            <!-- 2000 (sekitar 30 derajat) -->
-            <line x1="232" y1="72" x2="228" y2="84" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="240" y="58" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2000</text>
+            <!-- 2000 RPM (30°) -->
+            <line x1="232" y1="72" x2="224" y2="80" stroke="#ffffff" stroke-width="2.5"/>
+            <text x="238" y="62" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2000</text>
             
-            <!-- 2400 (kanan - 0 derajat) -->
+            <!-- 2400 RPM (0°) - Kanan -->
             <line x1="315" y1="175" x2="303" y2="175" stroke="#ffffff" stroke-width="2.5"/>
-            <text x="320" y="180" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2400</text>
+            <text x="322" y="182" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="middle">2400</text>
             
             <!-- Jarum -->
             <g class="needle" style="transform: rotate(-90deg);">
@@ -125,7 +132,7 @@
     const maxRPM = 2400;
     
     function updateSpeedometer(rpm) {
-        // Konversi RPM ke sudut: 0 RPM = -90deg, 2400 RPM = 90deg
+        // Konversi RPM ke sudut: 0 RPM = -90°, 2400 RPM = +90°
         const angle = Math.min((rpm / maxRPM) * 180, 180);
         const needleAngle = -90 + angle;
         document.querySelector('.needle').style.transform = `rotate(${needleAngle}deg)`;
@@ -153,7 +160,7 @@
             const el = document.getElementById('lastUpdate');
             if (timeAgo < 10) { el.innerHTML = `🟢 Update: ${timeAgo} detik yang lalu`; el.style.color = '#00ff88'; }
             else if (timeAgo < 30) { el.innerHTML = `🟡 Update: ${timeAgo} detik yang lalu`; el.style.color = '#ffaa00'; }
-            else { el.innerHTML = `🔴 Update: ${timeAgo} detik yang lalu (data mungkin sudah lama)`; el.style.color = '#ff4444'; }
+            else { el.innerHTML = `🔴 Update: ${timeAgo} detik yang lalu`; el.style.color = '#ff4444'; }
             
             document.getElementById('statusBadge').innerHTML = '🟢 Terhubung ke Firebase';
             document.getElementById('statusBadge').style.background = 'rgba(0,255,136,0.2)';
