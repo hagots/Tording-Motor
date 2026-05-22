@@ -91,20 +91,23 @@
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // Sudut: 0 RPM = -90° (kiri bawah), 2400 RPM = 90° (kanan bawah)
-        const angle = -Math.PI / 2 + (rpm / maxRPM) * Math.PI;
-        const endRad = angle;
+        // Speedometer setengah lingkaran ATAS
+        // 0 RPM di kiri (180°), 2400 RPM di kanan (0°)
+        // Bergerak melalui ATAS (270° = -90°)
+        const startAngle = Math.PI;  // 180° (kiri)
+        let endAngle = 0 - (rpm / maxRPM) * Math.PI;  // ke 0° (kanan) melalui atas
+        if (endAngle > 0) endAngle = 0;
         
-        // Track arc (background)
+        // Track arc (background abu-abu) - setengah lingkaran ATAS
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 155, -Math.PI / 2, Math.PI / 2);
+        ctx.arc(centerX, centerY, 155, startAngle, 0, true);
         ctx.strokeStyle = '#2a3a5a';
         ctx.lineWidth = 30;
         ctx.stroke();
         
         // Active arc (hijau)
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 155, -Math.PI / 2, endRad);
+        ctx.arc(centerX, centerY, 155, startAngle, endAngle, true);
         ctx.strokeStyle = '#00ff88';
         ctx.lineWidth = 30;
         ctx.stroke();
@@ -115,12 +118,13 @@
         ctx.fillStyle = '#0f2a4a';
         ctx.fill();
         
-        // Angka dan tick marks
+        // Angka dan tick marks (mengikuti setengah lingkaran ATAS)
         const nilai = [0, 400, 800, 1200, 1600, 2000, 2400];
-        const sudut = [-90, -60, -30, 0, 30, 60, 90];
+        // 0° = kanan, 90° = bawah, 180° = kiri, 270° = atas
+        const sudutDeg = [180, 210, 240, 270, 300, 330, 360];
         
         for (let i = 0; i < nilai.length; i++) {
-            const radSudut = sudut[i] * Math.PI / 180;
+            const radSudut = sudutDeg[i] * Math.PI / 180;
             
             // Tick mark
             const x1 = centerX + 140 * Math.cos(radSudut);
@@ -135,12 +139,12 @@
             ctx.lineWidth = 3;
             ctx.stroke();
             
-            // Angka
+            // Angka - di dalam lingkaran
             const xTeks = centerX + 125 * Math.cos(radSudut);
             const yTeks = centerY + 125 * Math.sin(radSudut);
             
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 14px "Segoe UI", Arial';
+            ctx.font = 'bold 13px "Segoe UI", Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(nilai[i].toString(), xTeks, yTeks);
@@ -148,12 +152,12 @@
         
         // Label RPM
         ctx.fillStyle = '#888888';
-        ctx.font = '12px "Segoe UI", Arial';
-        ctx.fillText('RPM', centerX, centerY + 70);
+        ctx.font = '11px "Segoe UI", Arial';
+        ctx.fillText('RPM', centerX, centerY - 65);
         
         // Jarum
-        const jarumX = centerX + 130 * Math.cos(endRad);
-        const jarumY = centerY + 130 * Math.sin(endRad);
+        const jarumX = centerX + 130 * Math.cos(endAngle);
+        const jarumY = centerY + 130 * Math.sin(endAngle);
         
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
