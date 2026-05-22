@@ -93,35 +93,38 @@
         
         // Speedometer setengah lingkaran ATAS
         // 0 RPM di kiri (180°), 2400 RPM di kanan (0°)
-        // Bergerak melalui ATAS (270° = -90°)
+        // Bergerak melalui ATAS (270°)
+        
+        // Hitung sudut akhir berdasarkan RPM
+        // Konversi: 0 RPM = 180°, 2400 RPM = 0°
         const startAngle = Math.PI;  // 180° (kiri)
-        let endAngle = 0 - (rpm / maxRPM) * Math.PI;  // ke 0° (kanan) melalui atas
-        if (endAngle > 0) endAngle = 0;
+        const endAngle = Math.PI - (rpm / maxRPM) * Math.PI;  // ke 0° (kanan)
         
         // Track arc (background abu-abu) - setengah lingkaran ATAS
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 155, startAngle, 0, true);
+        ctx.arc(centerX, centerY, 155, startAngle, 0);
         ctx.strokeStyle = '#2a3a5a';
         ctx.lineWidth = 30;
         ctx.stroke();
         
-        // Active arc (hijau)
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 155, startAngle, endAngle, true);
-        ctx.strokeStyle = '#00ff88';
-        ctx.lineWidth = 30;
-        ctx.stroke();
+        // Active arc (hijau) - hanya dari kiri ke posisi RPM
+        if (rpm > 0) {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 155, startAngle, endAngle);
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 30;
+            ctx.stroke();
+        }
         
-        // Inner circle
+        // Inner circle (menutupi bagian bawah arc)
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 105, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 90, 0, Math.PI * 2);
         ctx.fillStyle = '#0f2a4a';
         ctx.fill();
         
         // Angka dan tick marks (mengikuti setengah lingkaran ATAS)
         const nilai = [0, 400, 800, 1200, 1600, 2000, 2400];
-        // 0° = kanan, 90° = bawah, 180° = kiri, 270° = atas
-        const sudutDeg = [180, 210, 240, 270, 300, 330, 360];
+        const sudutDeg = [180, 150, 120, 90, 60, 30, 0];
         
         for (let i = 0; i < nilai.length; i++) {
             const radSudut = sudutDeg[i] * Math.PI / 180;
@@ -140,11 +143,11 @@
             ctx.stroke();
             
             // Angka - di dalam lingkaran
-            const xTeks = centerX + 125 * Math.cos(radSudut);
-            const yTeks = centerY + 125 * Math.sin(radSudut);
+            const xTeks = centerX + 120 * Math.cos(radSudut);
+            const yTeks = centerY + 120 * Math.sin(radSudut);
             
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 13px "Segoe UI", Arial';
+            ctx.font = 'bold 12px "Segoe UI", Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(nilai[i].toString(), xTeks, yTeks);
@@ -152,18 +155,18 @@
         
         // Label RPM
         ctx.fillStyle = '#888888';
-        ctx.font = '11px "Segoe UI", Arial';
-        ctx.fillText('RPM', centerX, centerY - 65);
+        ctx.font = '10px "Segoe UI", Arial';
+        ctx.fillText('RPM', centerX, centerY - 60);
         
         // Jarum
-        const jarumX = centerX + 130 * Math.cos(endAngle);
-        const jarumY = centerY + 130 * Math.sin(endAngle);
+        const jarumX = centerX + 135 * Math.cos(endAngle);
+        const jarumY = centerY + 135 * Math.sin(endAngle);
         
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(jarumX, jarumY);
         ctx.strokeStyle = '#ff4444';
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 4;
         ctx.stroke();
         
         ctx.beginPath();
@@ -175,17 +178,17 @@
         
         // Center lingkaran
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 16, 0, Math.PI * 2);
         ctx.fillStyle = '#1a1a2e';
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 16, 0, Math.PI * 2);
         ctx.strokeStyle = '#ff4444';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
         
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, 7, 0, Math.PI * 2);
         ctx.fillStyle = '#ff4444';
         ctx.fill();
         ctx.beginPath();
